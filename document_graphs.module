@@ -1,0 +1,223 @@
+<?php
+
+$DOCUMENT_GRAPHS_MIN_REF = 1000000;
+$DOCUMENT_GRAPHS_MAX_REF = 0;
+
+function document_graphs_menu() {
+  $items['document_graphs/%'] = array(
+      'page callback' => 'document_graphs_page',
+      'page arguments' => array(1),
+      'access callback' => TRUE,
+      'title' => 'Document graphs',
+  );
+  return $items;
+} 
+
+function document_graphs_page($a) {
+  drupal_add_js(drupal_get_path('module', 'document_graphs') . '/js/arbor2.js', 'file');
+  drupal_add_js(drupal_get_path('module', 'document_graphs') . '/js/io.js', 'file');
+  drupal_add_js(drupal_get_path('module', 'document_graphs') . '/js/help.js', 'file');
+  drupal_add_js(drupal_get_path('module', 'document_graphs') . '/js/dashboard.js', 'file');
+  drupal_add_js(drupal_get_path('module', 'document_graphs') . '/js/graphics.js', 'file');
+  drupal_add_js(drupal_get_path('module', 'document_graphs') . '/js/parseur.js', 'file');
+  drupal_add_js(drupal_get_path('module', 'document_graphs') . '/js/renderer.js', 'file');
+  drupal_add_js(drupal_get_path('module', 'document_graphs') . '/js/halfviz.js', 'file');
+//  drupal_add_js(drupal_get_path('module', 'document_graphs') . '/js/document_graphs.js', 'file');
+  
+  
+  $public_uri = FALSE;
+  if ($wrapper = file_stream_wrapper_get_instance_by_uri('public://')) {
+    $public_uri = $wrapper->realpath();
+  }
+  $main_path = variable_get('document_graphs_main_path');
+  $path = $public_uri . $main_path;
+  
+  // TEMP
+//  _document_graphs_generate_author($path);
+  
+  $file_to_load = '';
+  if ($a == 'author') {
+    $file_to_load = 'author';
+  } elseif ($a == 'reference') {
+    $file_to_load = 'reference';
+  }
+  $path .= $file_to_load;
+  $json_content = file_get_contents($path);
+//  $json_content = drupal_json_decode($json_content);
+//  $json_content = $json_content['src'];
+  drupal_add_js(
+    array(
+      'document_graphs' => array(
+        'graph' => $json_content,
+      )
+    ),
+    'setting');
+  $page = array(
+    '#type' => 'markup',
+    '#markup' => t('<div id="halfviz">
+    <canvas style="border: 1px solid #999; border-radius: 5px; box-shadow: 0 0 5px #888;" id="viewport" width="800" height="600"></canvas>
+    <div id="editor">
+      <div class="io">
+        <ul class="dialog"></ul>
+      </div>
+      
+    </div>
+    <div id="grabber"></div>
+  </div>'),
+  );
+  return $page; 
+}
+
+function document_graphs_block_info() {
+    $blocks['graphs'] = array(
+        'info' => t('Document graphs'),
+        'region' => 'sidebar_first',
+        'status' => TRUE
+    );
+    return $blocks;
+}
+
+function document_graphs_block_view($delta = '') {
+  if ($delta == 'graphs') {
+    $contents = '	<div class="title_block_head">
+						<h2>Document graphs</h2>	
+						<ul id="tab_menu">
+							<li><a href="'. url('document_graphs/author') .'" >Authors</a></li><!--
+							<li><a href="'. url('document_graphs/reference') .'" >Reference</a></li>
+							<li><a href="'. url('document_graphs/keyword') .'" >Keyword</a></li>-->
+							<div class="clear"></div>
+						</ul>
+					</div>';
+    $blocks['content'] = $contents;
+    
+    return $blocks;
+  }
+}
+
+function document_graphs_node_submit($node, $form, &$form_state) {
+//  dvm($node);
+  if ($form['#id'] == 'paper-node-form') {
+    // generating input files for graphs...
+
+    $public_uri = FALSE;
+    if ($wrapper = file_stream_wrapper_get_instance_by_uri('public://')) {
+      $public_uri = $wrapper->realpath();
+    }
+    $main_path = variable_get('document_graphs_main_path');
+    $path = $public_uri . $main_path;
+    
+    // reference
+    $result = db_query("SELECT n1.title AS t1, n2.title AS t2
+      FROM drupal6_field_data_citation_reference AS r, drupal6_node AS n1, drupal6_node AS n2
+      WHERE n1.nid = r.entity_id AND n2.nid = r.citation_reference_target_id");
+    $fh = fopen($path . 'reference', "w");
+    foreach ($result as $term) {
+      $t1 = drupal_substr($term->t1, 0, 10);
+      $t2 = drupal_substr($term->t2, 0, 10);
+      fwrite($fh, $t1 . ' -> ' . $t2 . "\n");
+    }
+    fclose($fh);
+    
+    // author
+    _document_graphs_generate_author($path);
+  }
+}
+
+function _document_graphs_generate_author($file_path) {
+  global $DOCUMENT_GRAPHS_MIN_REF, $DOCUMENT_GRAPHS_MAX_REF;
+  
+  $node_limit = 25;
+  $min_referer_amount = 5;
+  $referer_percent = 0.1;
+  
+  $result = db_query("SELECT auth2.title AS referer, auth2.nid AS referer_id, auth1.title AS referred, auth1.nid AS referred_id
+      FROM drupal6_field_data_citation_reference AS r, drupal6_node AS auth2,
+        drupal6_field_data_author_reference AS ar1, drupal6_field_data_author_reference AS ar2,
+        drupal6_node AS auth1
+      WHERE ar2.entity_id = r.entity_id AND ar1.entity_id = r.citation_reference_target_id
+        AND ar1.author_reference_target_id = auth1.nid AND ar2.author_reference_target_id = auth2.nid;");
+    
+  $map = array();
+  $referred_count = array();
+  $id_to_name_map = array();
+  foreach ($result as $term) {
+    $t1 = drupal_substr($term->referer, 0, 10);
+    $t2 = drupal_substr($term->referred, 0, 10);
+    $id_to_name_map[$t1] = $term->referer_id;
+    $id_to_name_map[$t2] = $term->referred_id;
+    if (array_key_exists($t2, $map)) {
+      $map[$t2][] = $t1;
+    } else {
+      $map[$t2] = array($t1);
+    }
+  }
+  uasort($map, '_document_graphs_assoc_sort');
+  $map = array_slice($map, 0, $node_limit);
+  $referred_count = array_slice($referred_count, 0, $node_limit);
+//  $referred_names = array_keys($referred_count);
+  
+  $fh = fopen($file_path . 'author', "w");
+//  $written = array();
+  $colors = array();
+  
+  
+  $min_len = 1000000;
+  $max_len = 0;
+  foreach ($map as $referred => $referers) {
+    $array_count_values = array_count_values($referers);
+    foreach ($referers as $referer) {
+      $cnt = $array_count_values[$referer];
+      if ($cnt > $max_len) $max_len = $cnt;
+      if ($cnt < $min_len) $min_len = $cnt;
+    }
+  }
+    
+  foreach ($map as $referred => $referers) {
+    $array_count_values = array_count_values($referers);
+    $probability = (count($referers) < $min_referer_amount ? 1 : $min_referer_amount * 1.0 / count($referers)) * 100;
+    
+    foreach ($referers as $referer) {
+      if (rand(1, 100) <= $probability) {
+        $strength = ((count($referers) - $DOCUMENT_GRAPHS_MIN_REF) * 1.0 / $DOCUMENT_GRAPHS_MAX_REF);
+        $referred_node = $referred . " (". count($referers) .")";
+        $id_to_name_map[$referred_node] = $id_to_name_map[$referred];
+        
+        $color = dechex(( ($array_count_values[$referer] - $min_len) / ($max_len - $min_len) ) * 255 );
+        $color = (strlen($color) < 2 ? "0" . $color : $color);
+//        dvm($color);
+                
+        fwrite($fh, $referer . " -> " . $referred_node . " {label: ". $array_count_values[$referer] .", length: ". (20 / ($array_count_values[$referer])) .", color: #". $color ."0000}\n");
+        $colors[$referred_node] = dechex(256 - ($strength * 128 + 127));
+      }
+    }
+  }
+  fwrite($fh, "\n\n; painting names based on relevance\n");
+  $i = 0;
+  foreach ($colors as $name => $col) {
+    fwrite($fh, $name . "{color: #". $col . $col . $col .", id:". $id_to_name_map[$name] ."}\n");
+  }
+  
+  fclose($fh);
+}
+
+function _document_graphs_assoc_sort($a, $b) {
+  global $DOCUMENT_GRAPHS_MIN_REF, $DOCUMENT_GRAPHS_MAX_REF;
+  
+  if (count($a) < $DOCUMENT_GRAPHS_MIN_REF) {
+    $DOCUMENT_GRAPHS_MIN_REF = count($a);
+  }
+  if (count($b) < $DOCUMENT_GRAPHS_MIN_REF) {
+    $DOCUMENT_GRAPHS_MIN_REF = count($b);
+  }
+  if (count($a) > $DOCUMENT_GRAPHS_MAX_REF) {
+    $DOCUMENT_GRAPHS_MAX_REF = count($a);
+  }
+  if (count($b) > $DOCUMENT_GRAPHS_MAX_REF) {
+    $DOCUMENT_GRAPHS_MAX_REF = count($b);
+  }
+  
+  if (count($a) == count($b)) {
+    return 0;
+  }
+  return (count($a) > count($b)) ? -1 : 1;
+}

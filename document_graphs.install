@@ -1,0 +1,48 @@
+<?php
+
+function document_graphs_install() {
+  $public_uri = FALSE;
+  if ($wrapper = file_stream_wrapper_get_instance_by_uri('public://')) {
+    $public_uri = $wrapper->realpath();
+  }
+  if ($public_uri === FALSE) {
+    drupal_set_message(st('Error at Document Graph installation. Public URI creation failed.'), 'error');
+    return;
+  }
+  $main_path = '/document_graphs/';
+  variable_set('document_graphs_main_path', $main_path);
+  if (!is_dir($public_uri . $main_path)) {
+    drupal_mkdir($public_uri . $main_path, 0777);
+  }
+  
+  _document_graphs_generate_author($public_uri . $main_path);
+}
+
+
+function document_graphs_uninstall() {
+  $path = variable_get('document_graphs_main_path');
+  $public_uri = FALSE;
+  if ($wrapper = file_stream_wrapper_get_instance_by_uri('public://')) {
+    $public_uri = $wrapper->realpath();
+  }
+  if ($public_uri === FALSE) {
+    drupal_set_message(t('Error at Document Graphs uninstallation. Public URI is FALSE.'), 'error');
+    return;
+  }
+  _document_graphs_rrmdir($public_uri . $path);
+}
+
+function _document_graphs_rrmdir($dir) {
+  if (strpos($dir, "/") !== strlen($dir) - 1) {
+    $dir .= "/";
+  }
+  foreach (glob($dir . '*') as $file) {
+    if (is_dir($file)) {
+      _document_graphs_rrmdir($file);
+    }
+    else {
+      drupal_unlink($file);
+    }
+  }
+  drupal_rmdir($dir);
+}
