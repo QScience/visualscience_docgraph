@@ -75,7 +75,7 @@
       },
 
       updateGraph:function(e){
-        var src_txt = Drupal.settings.document_graphs.graph
+        var src_txt = Drupal.settings.visualscience_docgraph.graph
         var network = parse(src_txt)
         $.each(network.nodes, function(nname, ndata){
           if (ndata.label===undefined) ndata.label = nname

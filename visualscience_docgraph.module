@@ -1,11 +1,11 @@
 <?php
 
-$DOCUMENT_GRAPHS_MIN_REF = 1000000;
-$DOCUMENT_GRAPHS_MAX_REF = 0;
+$VISUALSCIENCE_DOCGRAPH_MIN_REF = 1000000;
+$VISUALSCIENCE_DOCGRAPH_MAX_REF = 0;
 
-function document_graphs_menu() {
-  $items['document_graphs/%'] = array(
-      'page callback' => 'document_graphs_page',
+function visualscience_docgraph_menu() {
+  $items['visualscience_docgraph/%'] = array(
+      'page callback' => 'visualscience_docgraph_page',
       'page arguments' => array(1),
       'access callback' => TRUE,
       'title' => 'Document graphs',
@@ -13,27 +13,27 @@ function document_graphs_menu() {
   return $items;
 } 
 
-function document_graphs_page($a) {
-  drupal_add_js(drupal_get_path('module', 'document_graphs') . '/js/arbor2.js', 'file');
-  drupal_add_js(drupal_get_path('module', 'document_graphs') . '/js/io.js', 'file');
-  drupal_add_js(drupal_get_path('module', 'document_graphs') . '/js/help.js', 'file');
-  drupal_add_js(drupal_get_path('module', 'document_graphs') . '/js/dashboard.js', 'file');
-  drupal_add_js(drupal_get_path('module', 'document_graphs') . '/js/graphics.js', 'file');
-  drupal_add_js(drupal_get_path('module', 'document_graphs') . '/js/parseur.js', 'file');
-  drupal_add_js(drupal_get_path('module', 'document_graphs') . '/js/renderer.js', 'file');
-  drupal_add_js(drupal_get_path('module', 'document_graphs') . '/js/halfviz.js', 'file');
-//  drupal_add_js(drupal_get_path('module', 'document_graphs') . '/js/document_graphs.js', 'file');
+function visualscience_docgraph_page($a) {
+  drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/arbor2.js', 'file');
+  drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/io.js', 'file');
+  drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/help.js', 'file');
+  drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/dashboard.js', 'file');
+  drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/graphics.js', 'file');
+  drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/parseur.js', 'file');
+  drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/renderer.js', 'file');
+  drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/halfviz.js', 'file');
+//  drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/visualscience_docgraph.js', 'file');
   
   
   $public_uri = FALSE;
   if ($wrapper = file_stream_wrapper_get_instance_by_uri('public://')) {
     $public_uri = $wrapper->realpath();
   }
-  $main_path = variable_get('document_graphs_main_path');
+  $main_path = variable_get('visualscience_docgraph_main_path');
   $path = $public_uri . $main_path;
   
   // TEMP
-//  _document_graphs_generate_author($path);
+//  _visualscience_docgraph_generate_author($path);
   
   $file_to_load = '';
   if ($a == 'author') {
@@ -47,7 +47,7 @@ function document_graphs_page($a) {
 //  $json_content = $json_content['src'];
   drupal_add_js(
     array(
-      'document_graphs' => array(
+      'visualscience_docgraph' => array(
         'graph' => $json_content,
       )
     ),
@@ -68,23 +68,24 @@ function document_graphs_page($a) {
   return $page; 
 }
 
-function document_graphs_block_info() {
+function visualscience_docgraph_block_info() {
     $blocks['graphs'] = array(
-        'info' => t('Document graphs'),
+        'info' => t('VisualScience - Document graphs'),
         'region' => 'sidebar_first',
+        'weight' => -50,
         'status' => TRUE
     );
     return $blocks;
 }
 
-function document_graphs_block_view($delta = '') {
+function visualscience_docgraph_block_view($delta = '') {
   if ($delta == 'graphs') {
     $contents = '	<div class="title_block_head">
-						<h2>Document graphs</h2>	
+						<h2>VisualScience - Document graphs</h2>	
 						<ul id="tab_menu">
-							<li><a href="'. url('document_graphs/author') .'" >Authors</a></li><!--
-							<li><a href="'. url('document_graphs/reference') .'" >Reference</a></li>
-							<li><a href="'. url('document_graphs/keyword') .'" >Keyword</a></li>-->
+							<li><a href="'. url('visualscience_docgraph/author') .'" >Authors</a></li><!--
+							<li><a href="'. url('visualscience_docgraph/reference') .'" >Reference</a></li>
+							<li><a href="'. url('visualscience_docgraph/keyword') .'" >Keyword</a></li>-->
 							<div class="clear"></div>
 						</ul>
 					</div>';
@@ -94,7 +95,7 @@ function document_graphs_block_view($delta = '') {
   }
 }
 
-function document_graphs_node_submit($node, $form, &$form_state) {
+function visualscience_docgraph_node_submit($node, $form, &$form_state) {
 //  dvm($node);
   if ($form['#id'] == 'paper-node-form') {
     // generating input files for graphs...
@@ -103,7 +104,7 @@ function document_graphs_node_submit($node, $form, &$form_state) {
     if ($wrapper = file_stream_wrapper_get_instance_by_uri('public://')) {
       $public_uri = $wrapper->realpath();
     }
-    $main_path = variable_get('document_graphs_main_path');
+    $main_path = variable_get('visualscience_docgraph_main_path');
     $path = $public_uri . $main_path;
     
     // reference
@@ -119,12 +120,12 @@ function document_graphs_node_submit($node, $form, &$form_state) {
     fclose($fh);
     
     // author
-    _document_graphs_generate_author($path);
+    _visualscience_docgraph_generate_author($path);
   }
 }
 
-function _document_graphs_generate_author($file_path) {
-  global $DOCUMENT_GRAPHS_MIN_REF, $DOCUMENT_GRAPHS_MAX_REF;
+function _visualscience_docgraph_generate_author($file_path) {
+  global $VISUALSCIENCE_DOCGRAPH_MIN_REF, $VISUALSCIENCE_DOCGRAPH_MAX_REF;
   
   $node_limit = 25;
   $min_referer_amount = 5;
@@ -151,7 +152,7 @@ function _document_graphs_generate_author($file_path) {
       $map[$t2] = array($t1);
     }
   }
-  uasort($map, '_document_graphs_assoc_sort');
+  uasort($map, '_visualscience_docgraph_assoc_sort');
   $map = array_slice($map, 0, $node_limit);
   $referred_count = array_slice($referred_count, 0, $node_limit);
 //  $referred_names = array_keys($referred_count);
@@ -178,7 +179,7 @@ function _document_graphs_generate_author($file_path) {
     
     foreach ($referers as $referer) {
       if (rand(1, 100) <= $probability) {
-        $strength = ((count($referers) - $DOCUMENT_GRAPHS_MIN_REF) * 1.0 / $DOCUMENT_GRAPHS_MAX_REF);
+        $strength = ((count($referers) - $VISUALSCIENCE_DOCGRAPH_MIN_REF) * 1.0 / $VISUALSCIENCE_DOCGRAPH_MAX_REF);
         $referred_node = $referred . " (". count($referers) .")";
         $id_to_name_map[$referred_node] = $id_to_name_map[$referred];
         
@@ -200,20 +201,20 @@ function _document_graphs_generate_author($file_path) {
   fclose($fh);
 }
 
-function _document_graphs_assoc_sort($a, $b) {
-  global $DOCUMENT_GRAPHS_MIN_REF, $DOCUMENT_GRAPHS_MAX_REF;
+function _visualscience_docgraph_assoc_sort($a, $b) {
+  global $VISUALSCIENCE_DOCGRAPH_MIN_REF, $VISUALSCIENCE_DOCGRAPH_MAX_REF;
   
-  if (count($a) < $DOCUMENT_GRAPHS_MIN_REF) {
-    $DOCUMENT_GRAPHS_MIN_REF = count($a);
+  if (count($a) < $VISUALSCIENCE_DOCGRAPH_MIN_REF) {
+    $VISUALSCIENCE_DOCGRAPH_MIN_REF = count($a);
   }
-  if (count($b) < $DOCUMENT_GRAPHS_MIN_REF) {
-    $DOCUMENT_GRAPHS_MIN_REF = count($b);
+  if (count($b) < $VISUALSCIENCE_DOCGRAPH_MIN_REF) {
+    $VISUALSCIENCE_DOCGRAPH_MIN_REF = count($b);
   }
-  if (count($a) > $DOCUMENT_GRAPHS_MAX_REF) {
-    $DOCUMENT_GRAPHS_MAX_REF = count($a);
+  if (count($a) > $VISUALSCIENCE_DOCGRAPH_MAX_REF) {
+    $VISUALSCIENCE_DOCGRAPH_MAX_REF = count($a);
   }
-  if (count($b) > $DOCUMENT_GRAPHS_MAX_REF) {
-    $DOCUMENT_GRAPHS_MAX_REF = count($b);
+  if (count($b) > $VISUALSCIENCE_DOCGRAPH_MAX_REF) {
+    $VISUALSCIENCE_DOCGRAPH_MAX_REF = count($b);
   }
   
   if (count($a) == count($b)) {

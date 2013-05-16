@@ -1,4 +1,4 @@
-name = Document Graphs
+name = VisualScience - Document Graphs
 description = Displays some interesting graphs about documents and their connections.
 dependencies[] = qscience
 
