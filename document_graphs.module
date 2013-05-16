@@ -108,7 +108,7 @@ function document_graphs_node_submit($node, $form, &$form_state) {
     
     // reference
     $result = db_query("SELECT n1.title AS t1, n2.title AS t2
-      FROM drupal6_field_data_citation_reference AS r, drupal6_node AS n1, drupal6_node AS n2
+      FROM {field_data_citation_reference} r, {node} n1, {node} n2
       WHERE n1.nid = r.entity_id AND n2.nid = r.citation_reference_target_id");
     $fh = fopen($path . 'reference', "w");
     foreach ($result as $term) {
@@ -131,9 +131,9 @@ function _document_graphs_generate_author($file_path) {
   $referer_percent = 0.1;
   
   $result = db_query("SELECT auth2.title AS referer, auth2.nid AS referer_id, auth1.title AS referred, auth1.nid AS referred_id
-      FROM drupal6_field_data_citation_reference AS r, drupal6_node AS auth2,
-        drupal6_field_data_author_reference AS ar1, drupal6_field_data_author_reference AS ar2,
-        drupal6_node AS auth1
+      FROM {field_data_citation_reference} r, {node} auth2,
+        {field_data_author_reference} ar1, {field_data_author_reference} ar2,
+        {node} auth1
       WHERE ar2.entity_id = r.entity_id AND ar1.entity_id = r.citation_reference_target_id
         AND ar1.author_reference_target_id = auth1.nid AND ar2.author_reference_target_id = auth2.nid;");
     
