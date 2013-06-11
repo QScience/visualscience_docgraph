@@ -1,5 +1,8 @@
 <?php
 
+$VISUALSCIENCE_DOCGRAPH_MIN_REF_DEFAULT = 1000000;
+$VISUALSCIENCE_DOCGRAPH_MAX_REF_DEFAULT = 0;
+
 $VISUALSCIENCE_DOCGRAPH_MIN_REF = 1000000;
 $VISUALSCIENCE_DOCGRAPH_MAX_REF = 0;
 
@@ -83,8 +86,8 @@ function visualscience_docgraph_block_view($delta = '') {
     $contents = '	<div class="title_block_head">
 						<h2>VisualScience - Document graphs</h2>	
 						<ul id="tab_menu">
-							<li><a href="'. url('visualscience_docgraph/author') .'" >Authors</a></li><!--
-							<li><a href="'. url('visualscience_docgraph/reference') .'" >Reference</a></li>
+							<li><a href="'. url('visualscience_docgraph/author') .'" >Authors</a></li>
+							<li><a href="'. url('visualscience_docgraph/reference') .'" >Reference</a></li><!--
 							<li><a href="'. url('visualscience_docgraph/keyword') .'" >Keyword</a></li>-->
 							<div class="clear"></div>
 						</ul>
@@ -96,6 +99,9 @@ function visualscience_docgraph_block_view($delta = '') {
 }
 
 function visualscience_docgraph_node_submit($node, $form, &$form_state) {
+  global $VISUALSCIENCE_DOCGRAPH_MIN_REF_DEFAULT, $VISUALSCIENCE_DOCGRAPH_MAX_REF_DEFAULT,
+          $VISUALSCIENCE_DOCGRAPH_MIN_REF, $VISUALSCIENCE_DOCGRAPH_MAX_REF;
+  
 //  dvm($node);
   if ($form['#id'] == 'paper-node-form') {
     // generating input files for graphs...
@@ -121,7 +127,85 @@ function visualscience_docgraph_node_submit($node, $form, &$form_state) {
     
     // author
     _visualscience_docgraph_generate_author($path);
+    $VISUALSCIENCE_DOCGRAPH_MIN_REF = $VISUALSCIENCE_DOCGRAPH_MIN_REF_DEFAULT;
+    $VISUALSCIENCE_DOCGRAPH_MAX_REF = $VISUALSCIENCE_DOCGRAPH_MAX_REF_DEFAULT;
+    _visualscience_docgraph_generate_reference($path);
   }
+}
+
+function _visualscience_docgraph_generate_reference($file_path) {
+  global $VISUALSCIENCE_DOCGRAPH_MIN_REF, $VISUALSCIENCE_DOCGRAPH_MAX_REF;
+  
+  $node_limit = 25;
+  $min_referer_amount = 5;
+  $referer_percent = 0.1;
+  
+  $result = db_query("SELECT paper1.title AS referer, paper1.nid AS referer_id, paper2.title AS referred, paper2.nid AS referred_id
+      FROM {field_data_citation_reference} r, {node} paper2,
+        {node} paper1
+      WHERE paper1.nid = r.entity_id AND paper2.nid = r.citation_reference_target_id;");
+    
+  $map = array();
+  $referred_count = array();
+  $id_to_name_map = array();
+  foreach ($result as $term) {
+    $t1 = drupal_substr($term->referer, 0, 16);
+    $t2 = drupal_substr($term->referred, 0, 16);
+    $id_to_name_map[$t1] = $term->referer_id;
+    $id_to_name_map[$t2] = $term->referred_id;
+    if (array_key_exists($t2, $map)) {
+      $map[$t2][] = $t1;
+    } else {
+      $map[$t2] = array($t1);
+    }
+  }
+  uasort($map, '_visualscience_docgraph_assoc_sort');
+  $map = array_slice($map, 0, $node_limit);
+  $referred_count = array_slice($referred_count, 0, $node_limit);
+//  $referred_names = array_keys($referred_count);
+  
+  $fh = fopen($file_path . 'reference', "w");
+//  $written = array();
+  $colors = array();
+  
+  
+  $min_len = 1000000;
+  $max_len = 0;
+  foreach ($map as $referred => $referers) {
+    $array_count_values = array_count_values($referers);
+    foreach ($referers as $referer) {
+      $cnt = $array_count_values[$referer];
+      if ($cnt > $max_len) $max_len = $cnt;
+      if ($cnt < $min_len) $min_len = $cnt;
+    }
+  }
+    
+  foreach ($map as $referred => $referers) {
+    $array_count_values = array_count_values($referers);
+    $probability = (count($referers) < $min_referer_amount ? 1 : $min_referer_amount * 1.0 / count($referers)) * 100;
+    
+    foreach ($referers as $referer) {
+      if (rand(1, 100) <= $probability) {
+        $strength = ((count($referers) - $VISUALSCIENCE_DOCGRAPH_MIN_REF) * 1.0 / $VISUALSCIENCE_DOCGRAPH_MAX_REF);
+        $referred_node = $referred . " (". count($referers) .")";
+        $id_to_name_map[$referred_node] = $id_to_name_map[$referred];
+        
+        $color = dechex(( ($array_count_values[$referer] - $min_len) / ($max_len - $min_len) ) * 255 );
+        $color = (strlen($color) < 2 ? "0" . $color : $color);
+//        dvm($color);
+                
+        fwrite($fh, $referer . " -> " . $referred_node . " {label: ". $array_count_values[$referer] .", length: ". (20 / ($array_count_values[$referer])) .", color: #". $color ."0000}\n");
+        $colors[$referred_node] = dechex(256 - ($strength * 128 + 127));
+      }
+    }
+  }
+  fwrite($fh, "\n\n; painting names based on relevance\n");
+  $i = 0;
+  foreach ($colors as $name => $col) {
+    fwrite($fh, $name . "{color: #". $col . $col . $col .", id:". $id_to_name_map[$name] ."}\n");
+  }
+  
+  fclose($fh);
 }
 
 function _visualscience_docgraph_generate_author($file_path) {
