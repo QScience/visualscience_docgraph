@@ -133,6 +133,16 @@
         // set up a handler object that will initially listen for mousedowns then
         // for moves and mouseups while dragging
         var handler = {
+          mousemove:function(e) {
+            var canvOffset = $(canvas).offset();
+            var pos = arbor.Point(e.pageX-canvOffset.left, e.pageY-canvOffset.top);
+            var node = particleSystem.nearest(pos);
+            if (node.distance < 35) {
+              $('#halfviz #viewport').css({'cursor':'pointer'});
+            } else {
+              $('#halfviz #viewport').css({'cursor':'auto'});
+            }
+          },
           clicked:function(e){
             var pos = $(canvas).offset();
             _mouseP = arbor.Point(e.pageX-pos.left, e.pageY-pos.top)
@@ -157,7 +167,6 @@
 //            console.error();
           },
           dragged:function(e){
-//            console.error('d ragged');
             var old_nearest = nearest && nearest.node._id
             var pos = $(canvas).offset();
             var s = arbor.Point(e.pageX-pos.left, e.pageY-pos.top)
@@ -187,6 +196,7 @@
         $(canvas).mousedown(handler.clicked);
         $(canvas).mousedown(handler.mousedown);
         $(canvas).dblclick(handler.doubleclick);
+        $(canvas).mousemove(handler.mousemove);
 
       }
 
