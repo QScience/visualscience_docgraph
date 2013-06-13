@@ -16,6 +16,7 @@ function visualscience_docgraph_install() {
   }
   
   _visualscience_docgraph_generate_author($public_uri . $main_path);
+  _visualscience_docgraph_generate_reference($public_uri . $main_path);
 }
 
 
