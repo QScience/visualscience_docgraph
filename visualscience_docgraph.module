@@ -322,7 +322,7 @@ function _visualscience_docgraph_generate_reference($file_path) {
   $referred_count = array_slice($referred_count, 0, $node_limit);
 //  $referred_names = array_keys($referred_count);
   
-  $fh = fopen($file_path . 'reference', "w");
+  
 //  $written = array();
   $colors = array();
   
@@ -337,33 +337,36 @@ function _visualscience_docgraph_generate_reference($file_path) {
       if ($cnt < $min_len) $min_len = $cnt;
     }
   }
-    
-  foreach ($map as $referred => $referers) {
-    $array_count_values = array_count_values($referers);
-    $probability = (count($referers) < $min_referer_amount ? 1 : $min_referer_amount * 1.0 / count($referers)) * 100;
-    
-    foreach ($referers as $referer) {
-      if (rand(1, 100) <= $probability) {
-        $strength = ((count($referers) - $VISUALSCIENCE_DOCGRAPH_MIN_REF) * 1.0 / $VISUALSCIENCE_DOCGRAPH_MAX_REF);
-        $referred_node = $referred . " (". count($referers) .")";
-        $id_to_name_map[$referred_node] = $id_to_name_map[$referred];
-        
-        $color = dechex(( ($array_count_values[$referer] - $min_len) / ($max_len - $min_len) ) * 255 );
-        $color = (strlen($color) < 2 ? "0" . $color : $color);
-//        dvm($color);
-                
-        fwrite($fh, $referer . " -> " . $referred_node . " {label: ". $array_count_values[$referer] .", length: ". (20 / ($array_count_values[$referer])) .", color: #". $color ."0000}\n");
-        $colors[$referred_node] = dechex(256 - ($strength * 128 + 127));
+  
+  if ($max_len - $min_len !== 0) {
+    $fh = fopen($file_path . 'reference', "w");
+    foreach ($map as $referred => $referers) {
+      $array_count_values = array_count_values($referers);
+      $probability = (count($referers) < $min_referer_amount ? 1 : $min_referer_amount * 1.0 / count($referers)) * 100;
+
+      foreach ($referers as $referer) {
+        if (rand(1, 100) <= $probability) {
+          $strength = ((count($referers) - $VISUALSCIENCE_DOCGRAPH_MIN_REF) * 1.0 / $VISUALSCIENCE_DOCGRAPH_MAX_REF);
+          $referred_node = $referred . " (". count($referers) .")";
+          $id_to_name_map[$referred_node] = $id_to_name_map[$referred];
+
+          $color = dechex(( ($array_count_values[$referer] - $min_len) / ($max_len - $min_len) ) * 255 );
+          $color = (strlen($color) < 2 ? "0" . $color : $color);
+  //        dvm($color);
+
+          fwrite($fh, $referer . " -> " . $referred_node . " {label: ". $array_count_values[$referer] .", length: ". (20 / ($array_count_values[$referer])) .", color: #". $color ."0000}\n");
+          $colors[$referred_node] = dechex(256 - ($strength * 128 + 127));
+        }
       }
     }
+    fwrite($fh, "\n\n; painting names based on relevance\n");
+    $i = 0;
+    foreach ($colors as $name => $col) {
+      fwrite($fh, $name . "{color: #". $col . $col . $col .", id:". $id_to_name_map[$name] ."}\n");
+    }
+
+    fclose($fh);
   }
-  fwrite($fh, "\n\n; painting names based on relevance\n");
-  $i = 0;
-  foreach ($colors as $name => $col) {
-    fwrite($fh, $name . "{color: #". $col . $col . $col .", id:". $id_to_name_map[$name] ."}\n");
-  }
-  
-  fclose($fh);
 }
 
 function _visualscience_docgraph_generate_author($file_path) {
@@ -399,7 +402,7 @@ function _visualscience_docgraph_generate_author($file_path) {
   $referred_count = array_slice($referred_count, 0, $node_limit);
 //  $referred_names = array_keys($referred_count);
   
-  $fh = fopen($file_path . 'author', "w");
+  
 //  $written = array();
   $colors = array();
   
@@ -414,33 +417,35 @@ function _visualscience_docgraph_generate_author($file_path) {
       if ($cnt < $min_len) $min_len = $cnt;
     }
   }
-    
-  foreach ($map as $referred => $referers) {
-    $array_count_values = array_count_values($referers);
-    $probability = (count($referers) < $min_referer_amount ? 1 : $min_referer_amount * 1.0 / count($referers)) * 100;
-    
-    foreach ($referers as $referer) {
-      if (rand(1, 100) <= $probability) {
-        $strength = ((count($referers) - $VISUALSCIENCE_DOCGRAPH_MIN_REF) * 1.0 / $VISUALSCIENCE_DOCGRAPH_MAX_REF);
-        $referred_node = $referred . " (". count($referers) .")";
-        $id_to_name_map[$referred_node] = $id_to_name_map[$referred];
-        
-        $color = dechex(( ($array_count_values[$referer] - $min_len) / ($max_len - $min_len) ) * 255 );
-        $color = (strlen($color) < 2 ? "0" . $color : $color);
-//        dvm($color);
-                
-        fwrite($fh, $referer . " -> " . $referred_node . " {label: ". $array_count_values[$referer] .", length: ". (20 / ($array_count_values[$referer])) .", color: #". $color ."0000}\n");
-        $colors[$referred_node] = dechex(256 - ($strength * 128 + 127));
+  if ($max_len - $min_len !== 0) {
+    $fh = fopen($file_path . 'author', "w");
+    foreach ($map as $referred => $referers) {
+      $array_count_values = array_count_values($referers);
+      $probability = (count($referers) < $min_referer_amount ? 1 : $min_referer_amount * 1.0 / count($referers)) * 100;
+
+      foreach ($referers as $referer) {
+        if (rand(1, 100) <= $probability) {
+          $strength = ((count($referers) - $VISUALSCIENCE_DOCGRAPH_MIN_REF) * 1.0 / $VISUALSCIENCE_DOCGRAPH_MAX_REF);
+          $referred_node = $referred . " (". count($referers) .")";
+          $id_to_name_map[$referred_node] = $id_to_name_map[$referred];
+
+          $color = dechex(( ($array_count_values[$referer] - $min_len) / ($max_len - $min_len) ) * 255 );
+          $color = (strlen($color) < 2 ? "0" . $color : $color);
+  //        dvm($color);
+
+          fwrite($fh, $referer . " -> " . $referred_node . " {label: ". $array_count_values[$referer] .", length: ". (20 / ($array_count_values[$referer])) .", color: #". $color ."0000}\n");
+          $colors[$referred_node] = dechex(256 - ($strength * 128 + 127));
+        }
       }
     }
+    fwrite($fh, "\n\n; painting names based on relevance\n");
+    $i = 0;
+    foreach ($colors as $name => $col) {
+      fwrite($fh, $name . "{color: #". $col . $col . $col .", id:". $id_to_name_map[$name] ."}\n");
+    }
+
+    fclose($fh);
   }
-  fwrite($fh, "\n\n; painting names based on relevance\n");
-  $i = 0;
-  foreach ($colors as $name => $col) {
-    fwrite($fh, $name . "{color: #". $col . $col . $col .", id:". $id_to_name_map[$name] ."}\n");
-  }
-  
-  fclose($fh);
 }
 
 function _visualscience_docgraph_assoc_sort($a, $b) {
