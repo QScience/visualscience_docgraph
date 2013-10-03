@@ -197,6 +197,7 @@
     return objkeys(d)
   };
   var arbor_path = function() {
+    console.log(Drupal.settings.visualscience_docgraph.modulePath);
     return Drupal.settings.visualscience_docgraph.modulePath;
 //    console.log(Drupal.settings.visualscience_docgraph.modulePath);
 //    var a = $("script").map(function(b) {
