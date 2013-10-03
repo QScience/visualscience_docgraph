@@ -7,6 +7,8 @@ $VISUALSCIENCE_DOCGRAPH_MIN_REF = 1000000;
 $VISUALSCIENCE_DOCGRAPH_MAX_REF = 0;
 
 function visualscience_docgraph_node_view($node, $view_mode, $langcode) {
+  global $base_url;
+  
   if ($node->type === 'paper') {
     
     if (!isset($node->content['field_paper_upload'])) {
@@ -14,6 +16,13 @@ function visualscience_docgraph_node_view($node, $view_mode, $langcode) {
     }
     
 //    print_r($node->content);
+    drupal_add_js(
+    array(
+      'visualscience_docgraph' => array(
+        'modulePath' => $base_url . '/' . drupal_get_path('module', 'visualscience_docgraph') . '/js/'
+      )
+    ),
+    'setting');
     drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/arbor2.js', 'file');
     drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/io.js', 'file');
     drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/help.js', 'file');

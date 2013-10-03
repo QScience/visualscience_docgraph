@@ -197,23 +197,25 @@
     return objkeys(d)
   };
   var arbor_path = function() {
-    var a = $("script").map(function(b) {
-      var c = $(this).attr("src");
-      if (!c) {
-        return
-      }
-//      if (c.match(/arbor[^\/\.]*.js|dev.js/)) {
-        return c;
+    return Drupal.settings.visualscience_docgraph.modulePath;
+//    console.log(Drupal.settings.visualscience_docgraph.modulePath);
+//    var a = $("script").map(function(b) {
+//      var c = $(this).attr("src");
+//      if (!c) {
+//        return
 //      }
-    });
-    if (a.length > 0) {
-      for (var i = 0; i < a.length; i++) {
-        console.log(a[i]);
-      }
-      return a[0]
-    } else {
-      return null
-    }
+//      if (c.match(/arbor[^\/\.]*.js|dev.js/)) {
+//        return c;
+//      }
+//    });
+//    if (a.length > 0) {
+//      for (var i = 0; i < a.length; i++) {
+//        console.log(a[i]);
+//      }
+//      return a[0]
+//    } else {
+//      return null
+//    }
   };
   /*     kernel.js */  var Kernel = function(b) {
     var k = window.location.protocol == "file:" && navigator.userAgent.toLowerCase().indexOf("chrome") > -1;
