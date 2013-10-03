@@ -203,7 +203,7 @@
         return
       }
 //      if (c.match(/arbor[^\/\.]*.js|dev.js/)) {
-        return c.match(/.*\//) || "/"
+        return c;
 //      }
     });
     if (a.length > 0) {
