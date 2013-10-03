@@ -202,11 +202,14 @@
       if (!c) {
         return
       }
-      if (c.match(/arbor[^\/\.]*.js|dev.js/)) {
+//      if (c.match(/arbor[^\/\.]*.js|dev.js/)) {
         return c.match(/.*\//) || "/"
-      }
+//      }
     });
     if (a.length > 0) {
+      for (var i = 0; i < a.length; i++) {
+        console.log(a[i]);
+      }
       return a[0]
     } else {
       return null
