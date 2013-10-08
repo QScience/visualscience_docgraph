@@ -187,6 +187,7 @@ function visualscience_docgraph_menu() {
 } 
 
 function visualscience_docgraph_page($a) {
+  global $base_url;
   
   drupal_add_js(
     array(
