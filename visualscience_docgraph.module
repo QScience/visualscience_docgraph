@@ -187,6 +187,15 @@ function visualscience_docgraph_menu() {
 } 
 
 function visualscience_docgraph_page($a) {
+  
+  drupal_add_js(
+    array(
+      'visualscience_docgraph' => array(
+        'modulePath' => $base_url . '/' . drupal_get_path('module', 'visualscience_docgraph') . '/js/'
+      )
+    ),
+    'setting');
+  
   drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/arbor2.js', 'file');
   drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/io.js', 'file');
   drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/help.js', 'file');
