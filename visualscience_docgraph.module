@@ -364,6 +364,7 @@ function _visualscience_docgraph_generate_reference($file_path) {
   
   if ($max_len - $min_len !== 0) {
     $fh = fopen($file_path . 'reference', "w");
+    $referer_arr = array();
     foreach ($map as $referred => $referers) {
       $array_count_values = array_count_values($referers);
       $probability = (count($referers) < $min_referer_amount ? 1 : $min_referer_amount * 1.0 / count($referers)) * 100;
@@ -380,6 +381,10 @@ function _visualscience_docgraph_generate_reference($file_path) {
 
           fwrite($fh, $referer . " -> " . $referred_node . " {label: ". $array_count_values[$referer] .", length: ". (20 / ($array_count_values[$referer])) .", color: #". $color ."0000}\n");
           $colors[$referred_node] = dechex(256 - ($strength * 128 + 127));
+          
+          if (!in_array($referer, $referer_arr)) {
+            $referer_arr[] = $referer;
+          }
         }
       }
     }
@@ -387,6 +392,10 @@ function _visualscience_docgraph_generate_reference($file_path) {
     $i = 0;
     foreach ($colors as $name => $col) {
       fwrite($fh, $name . "{color: #". $col . $col . $col .", id:". $id_to_name_map[$name] ."}\n");
+    }
+//    dvm($referer_arr);
+    foreach ($referer_arr as $ref) {
+      fwrite($fh, $ref . "{id:". $id_to_name_map[$ref] ."}\n");
     }
 
     fclose($fh);
@@ -443,6 +452,7 @@ function _visualscience_docgraph_generate_author($file_path) {
   }
   if ($max_len - $min_len !== 0) {
     $fh = fopen($file_path . 'author', "w");
+    $referer_arr = array();
     foreach ($map as $referred => $referers) {
       $array_count_values = array_count_values($referers);
       $probability = (count($referers) < $min_referer_amount ? 1 : $min_referer_amount * 1.0 / count($referers)) * 100;
@@ -459,6 +469,10 @@ function _visualscience_docgraph_generate_author($file_path) {
 
           fwrite($fh, $referer . " -> " . $referred_node . " {label: ". $array_count_values[$referer] .", length: ". (20 / ($array_count_values[$referer])) .", color: #". $color ."0000}\n");
           $colors[$referred_node] = dechex(256 - ($strength * 128 + 127));
+          
+          if (!in_array($referer, $referer_arr)) {
+            $referer_arr[] = $referer;
+          }
         }
       }
     }
@@ -466,6 +480,9 @@ function _visualscience_docgraph_generate_author($file_path) {
     $i = 0;
     foreach ($colors as $name => $col) {
       fwrite($fh, $name . "{color: #". $col . $col . $col .", id:". $id_to_name_map[$name] ."}\n");
+    }
+    foreach ($referer_arr as $ref) {
+      fwrite($fh, $ref . "{id:". $id_to_name_map[$ref] ."}\n");
     }
 
     fclose($fh);
