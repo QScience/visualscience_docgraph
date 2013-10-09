@@ -378,8 +378,12 @@ function _visualscience_docgraph_generate_reference($file_path) {
           $color = dechex(( ($array_count_values[$referer] - $min_len) / ($max_len - $min_len) ) * 255 );
           $color = (strlen($color) < 2 ? "0" . $color : $color);
   //        dvm($color);
-
-          fwrite($fh, $referer . " -> " . $referred_node . " {label: ". $array_count_values[$referer] .", length: ". (20 / ($array_count_values[$referer])) .", color: #". $color ."0000}\n");
+          $referer_origi = $referer;
+          if (array_key_exists($referer, $map)) {
+            $referer = $referer . " (". count($map[$referer]) .")";
+          }
+          
+          fwrite($fh, $referer . " -> " . $referred_node . " {label: ". $array_count_values[$referer_origi] .", length: ". (20 / ($array_count_values[$referer_origi])) .", color: #". $color ."0000}\n");
           $colors[$referred_node] = dechex(256 - ($strength * 128 + 127));
           
           if (!in_array($referer, $referer_arr)) {
@@ -420,15 +424,15 @@ function _visualscience_docgraph_generate_author($file_path) {
   $referred_count = array();
   $id_to_name_map = array();
   foreach ($result as $term) {
-    $t1 = drupal_substr($term->referer, 0, 10);
-    $t2 = drupal_substr($term->referred, 0, 10);
-    $id_to_name_map[$t1] = $term->referer_id;
-    $id_to_name_map[$t2] = $term->referred_id;
-    if (array_key_exists($t2, $map)) {
-      $map[$t2][] = $t1;
-    } else {
-      $map[$t2] = array($t1);
-    }
+      $t1 = drupal_substr($term->referer, 0, 20);
+      $t2 = drupal_substr($term->referred, 0, 20);
+      $id_to_name_map[$t1] = $term->referer_id;
+      $id_to_name_map[$t2] = $term->referred_id;
+      if (array_key_exists($t2, $map)) {
+        $map[$t2][] = $t1;
+      } else {
+        $map[$t2] = array($t1);
+      }
   }
   uasort($map, '_visualscience_docgraph_assoc_sort');
   $map = array_slice($map, 0, $node_limit);
@@ -465,12 +469,14 @@ function _visualscience_docgraph_generate_author($file_path) {
 
           $color = dechex(( ($array_count_values[$referer] - $min_len) / ($max_len - $min_len) ) * 255 );
           $color = (strlen($color) < 2 ? "0" . $color : $color);
-  //        dvm($color);
-
-          fwrite($fh, $referer . " -> " . $referred_node . " {label: ". $array_count_values[$referer] .", length: ". (20 / ($array_count_values[$referer])) .", color: #". $color ."0000}\n");
+          $referer_origi = $referer;
+          if (array_key_exists($referer, $map)) {
+            $referer = $referer . " (". count($map[$referer]) .")";
+          }
+          fwrite($fh, $referer . " -> " . $referred_node . " {label: ". $array_count_values[$referer_origi] .", length: ". (20 / ($array_count_values[$referer_origi])) .", color: #". $color ."0000}\n");
           $colors[$referred_node] = dechex(256 - ($strength * 128 + 127));
           
-          if (!in_array($referer, $referer_arr)) {
+          if (!in_array($referer, $referer_arr) && !array_key_exists($referer, $colors)) {
             $referer_arr[] = $referer;
           }
         }
