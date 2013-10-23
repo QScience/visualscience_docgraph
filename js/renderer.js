@@ -161,7 +161,7 @@
             var pos = arbor.Point(e.pageX-canvOffset.left, e.pageY-canvOffset.top)
             var node = particleSystem.nearest(pos);
             if (node.node.data.id) {
-              window.open('?q=node/'+node.node.data.id, '_blank');
+              window.open(Drupal.settings.basePath + '?q=node/'+node.node.data.id, '_blank');
             }
 //            alert(node.node.data.id);
 //            console.error();

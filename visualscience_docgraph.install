@@ -30,6 +30,7 @@ function visualscience_docgraph_uninstall() {
     drupal_set_message(t('Error at Document Graphs uninstallation. Public URI is FALSE.'), 'error');
     return;
   }
+  _visualscience_docgraph_rrmdir($public_uri . $path);
 }
 
 function _visualscience_docgraph_rrmdir($dir) {
